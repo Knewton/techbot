@@ -1,0 +1,41 @@
+#!/usr/bin/env python
+import sys
+import time
+from techbot import TechBot
+from techbot.config import get_config
+from optparse import OptionParser
+
+def option_parser():
+	usage = '\n'.join(["usage: %prog [options]", "  Starts TechBot."])
+	parser = OptionParser(usage=usage)
+	parser.add_option(
+		"-j", "--jid", dest="jid", default="techbot@knewton.com",
+		help="jid of techbot: default techbot@knewton.com")
+	parser.add_option(
+		"-H", "--hostname", dest="hostname",
+		help="hostname of server if different from jid")
+	parser.add_option("-p", "--password", dest="password", help="password")
+	parser.add_option(
+		"-D", "--debug", dest="debug", default=None, action="store_true",
+		help="run in debug mode.  Default: False")
+	return parser
+
+def main():
+	(options, args) = option_parser().parse_args()
+	get_config(options)
+	while True:
+		tech_bot = TechBot(
+			options.jid,
+			options.password,
+			command_prefix='.',
+			hostname=options.hostname,
+			privatedomain=['knewton.com', 'im.partych.at'],
+			debug=options.debug)
+		retval = tech_bot.serve_forever()
+		if retval:
+			return
+		sys.stderr.write("DISCONNECT DETECTED, Restarting.")
+		time.sleep(1)
+
+if __name__ == "__main__":
+	main()

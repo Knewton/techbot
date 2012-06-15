@@ -29,6 +29,7 @@ class TechBot(JabberBot):
 		self.add_content_commands()
 		self.db = get_db()
 		self.rlock = RLock()
+		self.last_message = {}
 
 	def add_content_commands(self):
 		for name, value in inspect.getmembers(self, inspect.ismethod):
@@ -164,6 +165,10 @@ class TechBot(JabberBot):
 			room = tokens.pop(0)
 			lock = tokens.pop(0)
 		return room, owner, lock, ' '.join(tokens)
+
+	def kill_all_humans(self):
+		# For future use
+		pass
 
 	@botcmd
 	def lock(self, mess, args, alias, **kwargs):
@@ -381,6 +386,7 @@ class TechBot(JabberBot):
 			if m:
 				alias = m.group(1)
 			message = message[message.find(']')+2:]
+			self.handle_repetition(mess, alias, message)
 			mess.setBody(message)
 		text = super(TechBot, self).callback_message(
 			conn, mess, noreply_unknown=noreply_unknown, alias=alias)
@@ -391,6 +397,20 @@ class TechBot(JabberBot):
 			text = cmd(mess)
 			if text:
 				return text
+
+	def handle_repetition(self, mess, alias, body):
+		if self.is_room(mess) and alias:
+			with self.rlock:
+				last, count = self.last_message.get(alias, (None, 0))
+				if last == body:
+					count = count + 1
+				else:
+					count = 1
+				if count == 3:
+					self.send(
+						mess.getFrom(),
+						"/me stabs %s in the face for excessive repetition" % alias)
+				self.last_message[alias] = (body, count)
 
 	@contentcmd
 	def list_results(self, mess):
@@ -415,6 +435,14 @@ class TechBot(JabberBot):
 				return True
 
 	@contentcmd
+	def intentional_deploy_hype(self, mess):
+		if self.is_room(mess):
+			message = mess.getBody().lower()
+			if message.find('deploy!') > -1:
+				self.send(mess.getFrom(), select_deployment_hype())
+				return True
+
+	@contentcmd
 	def deploy_hype(self, mess):
 		if self.is_room(mess):
 			if random.randint(1, 100) >= 80:
@@ -423,12 +451,14 @@ class TechBot(JabberBot):
 					self.send(mess.getFrom(), select_deployment_hype())
 					return True
 
-	#@contentcmd
-	#def nods(self, mess):
-	#	if self.is_room(mess):
-	#		if random.randint(1, 100) >= 99:
-	#			self.send(mess.getFrom(), "/me nods")
-	#			return True
+	@contentcmd
+	def nods(self, mess):
+		if self.is_room(mess):
+			message = mess.getBody().lower()
+			if message.find('?') > -1:
+				if random.randint(1, 100) >= 99:
+					self.send(mess.getFrom(), "/me nods")
+					return True
 
 	@contentcmd
 	def smiles(self, mess):

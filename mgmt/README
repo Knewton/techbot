@@ -1,0 +1,17 @@
+This project is meant to be used as a submodule under python projects, as
+the mgmt/common folder.
+
+ex. cd $KNEWTON_REPO/lib/python/k.skeleton
+    git submodule add ssh://git.knewton.net/tools/PythonInfrastructure mgmt/common
+
+Trying to use this project in other contexts will not work by default
+due to some base assumptions (see $appdir), so be aware.
+
+.pylintrc should match up as exactly as possible with our
+Python coding standards.
+
+Jenkins "Unit Tests" jobs for Python projects should run
+./mgmt/common/pylint.sh, and track the results (stored in pylint.log)
+with the "Violations" Jenkins plugin.
+(see https://jenkins.knewton.net/jenkins/job/lib.python.k.skeleton%20Unit%20Tests/configure
+for an example)

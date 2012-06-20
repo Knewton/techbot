@@ -731,7 +731,7 @@ class JabberBot(object):
 		return ""
 
 	@botcmd
-	def help(self, mess, args):
+	def help(self, mess, args, **kwargs):
 		"""   Returns a help string listing available options.
 
 		Automatically assigned to the "help" command."""

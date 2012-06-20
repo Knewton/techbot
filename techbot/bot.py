@@ -138,8 +138,8 @@ class TechBot(JabberBot):
 			tokens = mess.getBody().split(' ')
 			if len(tokens) < 2:
 				return ' '.join([
-					"You must include a room name you are asking to be invited to.",
-					"Call .rooms for a list"])
+					"You must include a room name you are asking to be",
+					"invited to. Call .rooms for a list"])
 			room = tokens[1]
 			try:
 				roomjid = self.get_room_jid(room)
@@ -173,8 +173,9 @@ class TechBot(JabberBot):
 	@botcmd
 	def lock(self, mess, args, alias, **kwargs):
 		"""
-		Establish a lock over a resource.  Only you can unlock, but anyone can \
-		break.  Calling this will broadcast in the room the lock came from.
+		Establish a lock over a resource.
+		Only you can unlock, but anyone can break.
+		Calling this will broadcast in the room the lock came from.
 		Format: .lock <lockname> (message) From inside a room
 		        .lock <roomname> <lockname> (message) directly to techbot
 		"""
@@ -250,9 +251,9 @@ class TechBot(JabberBot):
 	@botcmd
 	def unlock(self, mess, args, alias, **kwargs):
 		"""
-		Release a lock you have over a resource.  Only the person who \
-		established it can unlock it, but anyone can break it.  Calling this \
-		will broadcast in the room the lock was established in.
+		Release a lock you have over a resource.
+		Only the person who established it can unlock it, but anyone can break it.
+		Calling this will broadcast in the room the lock was established in.
 		Format: .unlock <lockname>
 		"""
 		room, owner, lock, _ = self.get_lock_fundamentals(mess, alias)
@@ -298,10 +299,9 @@ class TechBot(JabberBot):
 	@botcmd(name='break')
 	def break_lock(self, mess, args, alias, **kwargs):
 		"""
-		Break a lock someone else has over a resource.  This is bad, but sadly \
-		necessary.  Calling this will broadcast to both the room the lock came \
-		from, in the tech room, and if possible a message will be sent to the \
-		owner.
+		Break a lock someone else has over a resource.
+		This is bad, but sadly necessary.
+		Calling this will broadcast to both the room the lock came from, in the tech room, and if possible a message will be sent to the owner.
 		Format: .break <lockname>
 		"""
 		room, owner, lock, _ = self.get_lock_fundamentals(mess, alias)
@@ -409,7 +409,8 @@ class TechBot(JabberBot):
 				if count == 3:
 					self.send(
 						mess.getFrom(),
-						"/me stabs %s in the face for excessive repetition" % alias)
+						"/me stabs %s in the face for excessive"
+						"repetition" % alias)
 				self.last_message[alias] = (body, count)
 
 	@contentcmd

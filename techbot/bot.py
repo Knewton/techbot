@@ -68,8 +68,8 @@ class TechBot(JabberBot):
 		tokens = mess.getBody().split(' ')
 		if len(tokens) < 2:
 			return ' '.join([
-				"You must include a room name you are asking to be invited to.",
-				"Call .rooms for a list"])
+				"You must include a room name you are asking to be invited",
+				"to. Call .rooms for a list"])
 		room = tokens[1]
 		try:
 			roomjid = self.get_room_jid(room)
@@ -107,8 +107,8 @@ class TechBot(JabberBot):
 		tokens = mess.getBody().split(' ')
 		if len(tokens) < 2:
 			return ' '.join([
-				"You must include a room name you are asking to be invited to.",
-				"Call .rooms for a list"])
+				"You must include a room name you are asking to be invited",
+				"to.  Call .rooms for a list"])
 		room = tokens[1]
 		roomjids = self.get_rooms()
 		rooms = [r.getNode() for r in roomjids]

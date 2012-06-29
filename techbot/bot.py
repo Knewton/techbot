@@ -193,57 +193,34 @@ class TechBot(JabberBot):
 
 	def set_lock(self, lock, owner, room, note):
 		with self.rlock:
-			locks = self.db.get('locks', {})
-			room_locks = locks.setdefault(room, {})
-			if room_locks.get(lock):
-				elock, eowner, enote = room_locks.get(lock)
+			locks = self.db.get('lock', {})
+			if locks.get(lock):
+				elock, eowner, enote, eroom = locks.get(lock)
 				if eowner != owner:
 					raise Exception("Lock already held: \n"
-						"    %s/%s: %s (%s)" % (room, lock, eowner, enote))
-			room_locks[lock] = (lock, owner, note)
-			self.db['locks'] = locks
-			return "Lock established: \n    %s/%s: %s %s" % (
-				room, lock, owner, note)
+						"    %s: %s (%s)" % (lock, eowner, enote))
+			locks[lock] = (lock, owner, note, room)
+			self.db['lock'] = locks
+			return "Lock established: \n    %s: %s %s" % (
+				lock, owner, note)
 
 	@botcmd
 	def locks(self, mess, args, alias=None, **kwargs):
 		"""
 		Get a list of locks
-		Format: .locks (print all locks for a room, or if direct, alias for .locks all)
-		        .locks all (print all locks)
-		        .locks <roomname> (print all locks for a room)
+		Format: .locks (print all locks)
 		"""
-		room = 'all'
-		body = mess.getBody()
-		if self.is_room(mess):
-			room = str(mess.getFrom()).split('@')[0]
-			tokens = body.split(" ")
-			tokens.pop(0) # .locks
-			if len(tokens) > 0:
-				room = tokens.pop(0)
-		else:
-			tokens = body.split(" ")
-			tokens.pop(0) # .locks
-			if len(tokens) > 0:
-				room = tokens.pop(0)
 		try:
-			return self.send_to_subscriber(alias, mess, self.get_locks(room))
+			return self.send_to_subscriber(alias, mess, self.get_locks())
 		except Exception, e:
 			return self.send_to_subscriber(alias, mess, str(e))
 
-	def get_locks(self, room):
-		locks = self.db.get('locks', {})
+	def get_locks(self):
+		locks = self.db.get('lock', {})
 		message = ["Existing Locks:"]
-		if room == 'all':
-			for key in locks:
-				room_locks = locks[key]
-				for lock, owner, note in room_locks.values():
-					message.append("    %s/%s: %s %s" %(
-						key, lock, owner, note))
-		else:
-			room_locks = locks.setdefault(room, {})
-			for lock, owner, note in room_locks.values():
-				message.append("    %s/%s: %s %s" %(room, lock, owner, note))
+		for lock, owner, note, room in locks.values():
+			message.append("    %s: %s %s" %(
+				lock, owner, note))
 		if len(message) == 1:
 			message.append("    NONE")
 		return '\n'.join(message)
@@ -258,8 +235,8 @@ class TechBot(JabberBot):
 		"""
 		room, owner, lock, _ = self.get_lock_fundamentals(mess, alias)
 		try:
+			room, response = self.release_lock(lock, owner)
 			roomjid = self.get_room_jid(room)
-			response = self.release_lock(lock, owner, room)
 			if self.is_room(mess):
 				return response
 			else:
@@ -267,34 +244,6 @@ class TechBot(JabberBot):
 				return response
 		except Exception, e:
 			return str(e)
-
-	def release_lock(self, lock, owner, room, break_lock=False):
-		with self.rlock:
-			locks = self.db.get('locks', {})
-			room_locks = locks.setdefault(room, {})
-			if room_locks.get(lock):
-				elock, eowner, enote = room_locks.get(lock)
-				if eowner != owner:
-					if break_lock:
-						try:
-							response = "LOCK BROKEN: \n    %s/%s: %s" % (
-								room, lock, owner)
-							sub = self.get_subscriber(eowner)
-							self.send(sub, response)
-						except Exception, e:
-							print e
-					else:
-						raise Exception("You don't own that lock!: \n"
-							"    %s/%s: %s %s" % (room, lock, eowner, enote))
-			else:
-				raise Exception("Lock does not exist: \n"
-					"    %s/%s" % (room, lock))
-			del room_locks[lock]
-			self.db['locks'] = locks
-			if break_lock:
-				return "LOCK BROKEN: \n    %s/%s: %s" % (room, lock, owner)
-			else:
-				return "Lock released: \n    %s/%s: %s" % (room, lock, owner)
 
 	@botcmd(name='break')
 	def break_lock(self, mess, args, alias, **kwargs):
@@ -306,9 +255,8 @@ class TechBot(JabberBot):
 		"""
 		room, owner, lock, _ = self.get_lock_fundamentals(mess, alias)
 		try:
+			room, response = self.release_lock(lock, owner, break_lock=True)
 			roomjid = self.get_room_jid(room)
-			response = self.release_lock(lock, owner, room, break_lock=True)
-			print response
 			if self.is_room(mess):
 				self.send(self.get_room_jid('knewton-tech'), response)
 				return response
@@ -318,6 +266,36 @@ class TechBot(JabberBot):
 				return response
 		except Exception, e:
 			return str(e)
+
+	def release_lock(self, lock, owner, break_lock=False):
+		room = None
+		with self.rlock:
+			locks = self.db.get('lock', {})
+			if locks.get(lock):
+				elock, eowner, enote, room = locks.get(lock)
+				if eowner != owner:
+					if break_lock:
+						try:
+							response = "LOCK BROKEN: \n    %s: %s" % (
+								lock, owner)
+							sub = self.get_subscriber(eowner)
+							self.send(sub, response)
+						except Exception, e:
+							print e
+					else:
+						raise Exception("You don't own that lock!: \n"
+							"    %s: %s %s" % (lock, eowner, enote))
+				else:
+					break_lock = False
+			else:
+				raise Exception("Lock does not exist: \n"
+					"    %s" % (lock))
+			del locks[lock]
+			self.db['lock'] = locks
+			if break_lock:
+				return room, "LOCK BROKEN: \n    %s: %s" % (lock, owner)
+			else:
+				return room, "Lock released: \n    %s: %s" % (lock, owner)
 
 	def subscribed(self, jid):
 		if jid.getDomain() == 'im.partych.at':

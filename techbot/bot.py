@@ -501,19 +501,14 @@ class TechBot(JabberBot):
 def select_hype():
 	hype = [
 		"/me pumps its fist in the air (Yeah!!)",
+		"Gangnam Style!",
 		"Sick!",
-		"You guys totally destroyed that!"
 		"Aaaaay! You know what it is!",
-		"Ohhhh! GET IT!",
-		"Ha haaa! Yaaay-uhhh!",
 		"Yoooooouuuuu!",
-		"Get 'em up! GET YOUR HANDS UP!",
 		"Get money!",
 		"Ballllllin!",
 		"Jeah!",
 		"Get it!",
-		"That's my dog! That's my boy right there!",
-		"Put your hands together for this one right here!",
 		"/me just popped a bottle",
 		"/me is making it rain",
 		"/me is getting so low right now"]
